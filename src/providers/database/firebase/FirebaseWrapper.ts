@@ -1,11 +1,11 @@
 import { IFirebaseWrapper } from "./IFirebaseWrapper";
-import { RAFirebaseOptions } from "providers/RAFirebaseOptions";
+import { RAFirebaseOptions } from "../../RAFirebaseOptions";
 
 import firebase from "firebase/app";
 import "firebase/firestore";
 import "firebase/auth";
 import "firebase/storage";
-import { log } from "misc";
+import { log } from "../../../misc";
 
 export class FirebaseWrapper implements IFirebaseWrapper {
   private firestore: firebase.firestore.Firestore;
@@ -34,7 +34,7 @@ export class FirebaseWrapper implements IFirebaseWrapper {
     return this.app.storage();
   }
   public OnUserLogout(callBack: (u: firebase.User) => any) {
-    this.app.auth().onAuthStateChanged(user => {
+    this.app.auth().onAuthStateChanged((user: any) => {
       const isLoggedOut = !user;
       log('FirebaseWrapper.OnUserLogout', {user, isLoggedOut});
       if (isLoggedOut) {
