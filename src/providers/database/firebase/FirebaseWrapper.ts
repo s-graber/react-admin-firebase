@@ -20,6 +20,10 @@ export class FirebaseWrapper implements IFirebaseWrapper {
     this.firestore = this.app.firestore();
   }
   public db(): firebase.firestore.Firestore {
+    this.firestore.settings({
+        host: "localhost:8080",
+        ssl: false
+    });
     return this.firestore;
   }
   public serverTimestamp() {
