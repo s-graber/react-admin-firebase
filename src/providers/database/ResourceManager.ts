@@ -9,6 +9,8 @@ import { IFirebaseWrapper } from "./firebase/IFirebaseWrapper";
 import { User } from "@firebase/auth-types";
 import { log, getAbsolutePath, messageTypes, logError, parseAllDatesDoc } from "../../misc";
 
+export type DocumentData = { [field: string]: any };
+
 export interface IResource {
   path: string;
   pathAbsolute: string;
@@ -46,7 +48,7 @@ export class ResourceManager {
 
   public async TryGetResourcePromise(
     relativePath: string,
-    collectionQuery: messageTypes.CollectionQueryType
+    collectionQuery?: messageTypes.CollectionQueryType
   ): Promise<IResource> {
     log("resourceManager.TryGetResourcePromise", {
       relativePath,
@@ -65,7 +67,7 @@ export class ResourceManager {
 
   public async RefreshResource(
     relativePath: string,
-    collectionQuery: messageTypes.CollectionQueryType
+    collectionQuery?: messageTypes.CollectionQueryType
   ) {
     log("resourceManager.RefreshResource", { relativePath, collectionQuery });
     await this.initPath(relativePath, collectionQuery);
@@ -90,7 +92,7 @@ export class ResourceManager {
     if (!docSnap.exists) {
       throw new Error("react-admin-firebase: No id found matching: " + docId);
     }
-    const result = this.parseFireStoreDocument(docSnap);
+    const result = this.parseFireStoreDocument(docSnap) as QueryDocumentSnapshot;
     log("resourceManager.GetSingleDoc", {
       relativePath,
       resource,
@@ -133,12 +135,15 @@ export class ResourceManager {
     });
   }
 
-  private parseFireStoreDocument(doc: QueryDocumentSnapshot): {} {
-    const data = doc.data();
-    parseAllDatesDoc(data);
-    // React Admin requires an id field on every document,
-    // So we can just using the firestore document id
-    return { id: doc.id, ...data };
+  private parseFireStoreDocument(doc: QueryDocumentSnapshot): {}{
+    const data: DocumentData = doc.data();
+    if(data){
+      parseAllDatesDoc(data);
+      // React Admin requires an id field on every document,
+      // So we can just using the firestore document id
+      return { id: doc.id, ...data }
+    }
+    return {}
   }
 
   public async getUserLogin(): Promise<User> {

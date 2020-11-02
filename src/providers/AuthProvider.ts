@@ -15,7 +15,7 @@ class AuthClient {
     const fireWrapper = new FirebaseWrapper();
     fireWrapper.init(firebaseConfig, options);
     this.auth = fireWrapper.auth();
-    this.setPersistence(options.persistence);
+    this.setPersistence(options.persistence || 'none');
   }
 
   setPersistence(persistenceInput: "session" | "local" | "none") {

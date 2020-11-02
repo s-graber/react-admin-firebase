@@ -36,7 +36,7 @@ export class FirebaseClient implements IFirebaseClient {
 
     const filterSafe = params.filter || {};
 
-    const collectionQuery = filterSafe.collectionQuery;
+    const collectionQuery = filterSafe.collectionQuery
     delete filterSafe.collectionQuery;
 
     const r = await this.tryGetResource(
@@ -102,7 +102,7 @@ export class FirebaseClient implements IFirebaseClient {
     const hasOverridenDocId = params.data && params.data.id;
     log("apiCreate", { hasOverridenDocId });
     if (hasOverridenDocId) {
-      const overridenId = params.data.id;
+      const overridenId = params.data.id || '';
       const exists = (await r.collection.doc(overridenId).get()).exists;
       if (exists) {
         throw new Error(
@@ -468,7 +468,7 @@ export class FirebaseClient implements IFirebaseClient {
     rawFile: any,
     docPath: string,
     fieldPath: string,
-    useFileName: boolean
+    useFileName?: boolean
   ): Promise<string> {
     const storagePath = useFileName ? 
       joinPaths(docPath, fieldPath, rawFile.name) : 
@@ -504,6 +504,7 @@ export class FirebaseClient implements IFirebaseClient {
           storageError
         });
       }
+      return Promise.reject();
     }
   }
 }

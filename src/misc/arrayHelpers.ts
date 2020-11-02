@@ -52,20 +52,18 @@ export function filterArray(
     const getSubObjects = getFieldReferences(fieldName, fieldValue);
     searchObjs.push(...getSubObjects);
   });
-  const filtered = data.filter((row) =>
-    searchObjs.reduce(
-      (prev, curr) =>
-        doesRowMatch(row, curr.searchField, curr.searchValue) && prev,
-      true
-    )
-  );
+  const filtered = data.filter((row) => {
+    const filterFn = (prev, curr) => doesRowMatch(row, curr.searchField, curr.searchValue, prev);
+    return searchObjs.reduce(filterFn, true)
+  });
   return filtered;
 }
 
 export function doesRowMatch(
   row: {},
   searchField: string,
-  searchValue: any
+  searchValue: any,
+  previousValue: boolean,
 ): boolean {
   let searchThis = row[searchField];
   const isDeepField = searchField.includes(".");
@@ -74,23 +72,25 @@ export function doesRowMatch(
   }
   const bothAreFalsey = !searchThis && !searchValue;
   if (bothAreFalsey) {
-    return true;
+    return true && previousValue;
   }
   const nothingToSearch = !searchThis;
   if (nothingToSearch) {
-    return false;
+    return false && previousValue;
   }
   const isStringSearch = typeof searchValue === "string";
   if (isStringSearch) {
-    return searchThis
+    const ret: boolean = searchThis
       .toString()
       .toLowerCase()
-      .includes(searchValue.toLowerCase());
+      .includes(searchValue.toLowerCase())
+    return ret && previousValue;
   }
   const isBooleanOrNumber =
     typeof searchValue === "boolean" || typeof searchValue === "number";
   if (isBooleanOrNumber) {
-    return searchThis === searchValue;
+    const ret = (searchThis === searchValue)
+    return ret && previousValue;
   }
-  return false;
+  return false && previousValue;
 }
