@@ -20,10 +20,13 @@ export class FirebaseWrapper implements IFirebaseWrapper {
     this.firestore = this.app.firestore();
   }
   public db(): firebase.firestore.Firestore {
-    this.firestore.settings({
+    // eslint-disable-next-line no-restricted-globals
+    if(location.hostname==='localhost1'){
+      this.firestore.settings({
         host: "localhost:8080",
         ssl: false
     });
+    }
     return this.firestore;
   }
   public serverTimestamp() {
