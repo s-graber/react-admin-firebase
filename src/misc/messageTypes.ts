@@ -2,7 +2,7 @@
 import { CollectionReference } from "@firebase/firestore-types";
 
 // PARAMETERS
-export namespace messageTypes {
+export declare namespace messageTypes {
   export interface IParamsGetList {
     pagination: {
       page: number;

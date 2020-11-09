@@ -8,6 +8,7 @@ export function getFieldReferences(
 ): SearchObj[] {
   const isFalsey = !value;
   const isSimple = isFalsey;
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   typeof value === "string" ||
     typeof value === "number" ||
     typeof value === "boolean";
