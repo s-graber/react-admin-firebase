@@ -57,4 +57,36 @@ describe("api methods", () => {
     });
     expect(result.data.length).toBe(2);
   }, 100000);
+
+  test("FirebaseClient list docs with get/lte filter", async () => {
+    const testDocs = [
+      {
+        title: "A",
+        volume: 100,
+      },
+      {
+        title: "B",
+        volume: 20,
+      },
+      {
+        title: "C",
+        volume: 120,
+      },
+    ];
+    const collName = "list-filtered";
+    const collection = fire.db().collection(collName);
+    await Promise.all(testDocs.map((doc) => collection.add(doc)));
+
+    const client = new FirebaseClient(fire, {});
+    const result = await client.apiGetList(collName, {
+      pagination: {
+        page: 1,
+        perPage: 10,
+      },
+      filter: {
+        volume: 100
+      } as any
+    });
+    expect(result.data.length).toBe(1);
+  }, 100000);
 });
