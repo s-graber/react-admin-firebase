@@ -90,19 +90,19 @@ describe("array filter", () => {
 
   test("doesRowMatch, partial", () => {
     const inputRow = { name: "Banana", enabled: true };
-    const result = doesRowMatch(inputRow, "name", "ana");
+    const result = doesRowMatch(inputRow, "name", "ana", true);
     expect(result).toEqual(true);
   });
 
   test("doesRowMatch, deep object", () => {
     const inputRow = { name: "Banana", deep: { enabled: "Apple" } };
-    const result = doesRowMatch(inputRow, "deep.enabled", "Apple");
+    const result = doesRowMatch(inputRow, "deep.enabled", "Apple", true);
     expect(result).toEqual(true);
   });
 
   test("doesRowMatch, deep object path doesn't exist", () => {
     const inputRow = { name: "Banana", deep: { enabled: "Apple" } };
-    const result = doesRowMatch(inputRow, "deep.enabled.sss", "Apple");
+    const result = doesRowMatch(inputRow, "deep.enabled.sss", "Apple", true);
     expect(result).toEqual(false);
   });
 

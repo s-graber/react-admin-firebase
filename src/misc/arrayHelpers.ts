@@ -63,7 +63,7 @@ export function doesRowMatch(
   row: {},
   searchField: string,
   searchValue: any,
-  previousValue: boolean,
+  previousValue: boolean = false,
 ): boolean {
   let searchThis = row[searchField];
   const isDeepField = searchField.includes(".");
