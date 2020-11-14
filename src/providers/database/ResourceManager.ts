@@ -139,6 +139,18 @@ export class ResourceManager {
     const data: DocumentData = doc.data();
     if(data){
       parseAllDatesDoc(data);
+
+      Object.keys(data).forEach((key) => {
+        if(key.endsWith('_id')){
+          const resource = key.replace('_id','')
+          const relativePath = `${resource}s`
+          const rootRef = this.options && this.options.rootRef;
+          const absolutePath = getAbsolutePath(rootRef, relativePath);
+          const collectionQuery = collection => collection.where(relativePath, "==", data[key])
+          data[resource] = this.RefreshResource(absolutePath, collectionQuery)        
+        }
+      });
+
       // React Admin requires an id field on every document,
       // So we can just using the firestore document id
       return { id: doc.id, ...data }
