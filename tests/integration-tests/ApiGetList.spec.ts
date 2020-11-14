@@ -18,6 +18,11 @@ describe("api methods", () => {
 
     const client = new FirebaseClient(fire, {});
     const result = await client.apiGetList(collName, {
+      sort: {
+        field: "title",
+        order: "asc",
+      },
+      filter: {},
       pagination: {
         page: 1,
         perPage: 10,
@@ -47,30 +52,40 @@ describe("api methods", () => {
 
     const client = new FirebaseClient(fire, {});
     const result = await client.apiGetList(collName, {
+      sort: {
+        field: "title",
+        order: "asc",
+      },
       pagination: {
         page: 1,
         perPage: 10,
       },
       filter: {
-        isEnabled: false
-      } as any
+        isEnabled: false,
+      },
     });
     expect(result.data.length).toBe(2);
   }, 100000);
 
-  test("FirebaseClient list docs with get/lte filter", async () => {
+  test("FirebaseClient list docs with dotpath sort", async () => {
     const testDocs = [
       {
-        title: "A",
-        volume: 100,
+        obj: {
+          title: "A",
+        },
+        isEnabled: false,
       },
       {
-        title: "B",
-        volume: 20,
+        obj: {
+          title: "C",
+        },
+        isEnabled: false,
       },
       {
-        title: "C",
-        volume: 120,
+        obj: {
+          title: "B",
+        },
+        isEnabled: true,
       },
     ];
     const collName = "list-filtered";
@@ -79,14 +94,18 @@ describe("api methods", () => {
 
     const client = new FirebaseClient(fire, {});
     const result = await client.apiGetList(collName, {
+      filter: {},
       pagination: {
         page: 1,
         perPage: 10,
       },
-      filter: {
-        volume: 100
-      } as any
+      sort: {
+        field: "obj.title",
+        order: "ASC",
+      },
     });
-    expect(result.data.length).toBe(1);
+    const second = result.data[1] as any;
+    expect(second).toBeTruthy();
+    expect(second.obj.title).toBe("B");
   }, 100000);
 });

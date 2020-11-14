@@ -1,5 +1,5 @@
-import { IFirebaseWrapper } from "./IFirebaseWrapper";
-import { RAFirebaseOptions } from "../../RAFirebaseOptions";
+import { FireApp, IFirebaseWrapper } from "./IFirebaseWrapper";
+import { RAFirebaseOptions } from "providers/RAFirebaseOptions";
 
 import firebase from "firebase/app";
 import "firebase/firestore";
@@ -9,7 +9,11 @@ import { log } from "../../../misc";
 
 export class FirebaseWrapper implements IFirebaseWrapper {
   private firestore: firebase.firestore.Firestore;
-  private app: firebase.app.App;
+  private app: FireApp;
+
+  public GetApp(): FireApp {
+    return this.app;
+  }
 
   constructor() { }
   public options: RAFirebaseOptions;
