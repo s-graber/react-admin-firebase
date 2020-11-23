@@ -124,8 +124,8 @@ export class ResourceManager {
     const resource = this.resources[relativePath];
     const docSnap = await resource.collection.doc(docId).get();
     if (!docSnap.exists) {
-      return;
-      // throw new Error("react-admin-firebase: No id found matching: " + docId);
+      // return;
+      throw new Error("react-admin-firebase: No id found matching: " + relativePath + "/" + docId);
     }
     const result = this.parseFireStoreDocument(docSnap as any);
     log("resourceManager.GetSingleDoc", {
