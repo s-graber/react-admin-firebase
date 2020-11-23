@@ -41,9 +41,9 @@ function basicSort(aValue: any, bValue: any, isAsc: boolean) {
 
 export function filterArray(
   data: Array<{}>,
-  searchFields: { [field: string]: string | number | boolean }
+  searchFields?: { [field: string]: string | number | boolean | null }
 ): Array<{}> {
-  if (isEmpty(searchFields)) {
+  if (!searchFields || isEmpty(searchFields)) {
     return data;
   }
   const searchObjs: SearchObj[] = [];
@@ -52,10 +52,12 @@ export function filterArray(
     const getSubObjects = getFieldReferences(fieldName, fieldValue);
     searchObjs.push(...getSubObjects);
   });
-  const filtered = data.filter((row) => {
-    const filterFn = (prev, curr) => doesRowMatch(row, curr.searchField, curr.searchValue, prev);
-    return searchObjs.reduce(filterFn, true)
-  });
+  const filtered = data.filter((row) =>
+    searchObjs.reduce((acc, cur) => {
+      const res = doesRowMatch(row, cur.searchField, cur.searchValue);
+      return res && acc;
+    }, true as boolean)
+  );
   return filtered;
 }
 
