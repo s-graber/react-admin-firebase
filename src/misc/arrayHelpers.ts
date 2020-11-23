@@ -64,31 +64,28 @@ export function filterArray(
 export function doesRowMatch(
   row: {},
   searchField: string,
-  searchValue: any,
-  previousValue: boolean = false,
+  searchValue: any
 ): boolean {
   const searchThis = get(row, searchField);
   const bothAreFalsey = !searchThis && !searchValue;
   if (bothAreFalsey) {
-    return true && previousValue;
+    return true;
   }
   const nothingToSearch = !searchThis;
   if (nothingToSearch) {
-    return false && previousValue;
+    return false;
   }
   const isStringSearch = typeof searchValue === "string";
   if (isStringSearch) {
-    const ret: boolean = searchThis
+    return searchThis
       .toString()
       .toLowerCase()
-      .includes(searchValue.toLowerCase())
-    return ret && previousValue;
+      .includes(searchValue.toLowerCase());
   }
   const isBooleanOrNumber =
     typeof searchValue === "boolean" || typeof searchValue === "number";
   if (isBooleanOrNumber) {
-    const ret = (searchThis === searchValue)
-    return ret && previousValue;
+    return searchThis === searchValue;
   }
-  return false && previousValue;
+  return false;
 }
