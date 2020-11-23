@@ -1,7 +1,7 @@
 {
-  "name": "react-admin-firebase",
-  "description": "A firebase data provider for the React Admin framework",
-  "version": "3.1.6",
+  "name": "react-admin-firebase-sg",
+  "description": "A firebase data provider for the React Admin framework (forked by s-graber)",
+  "version": "3.2.16",
   "peerDependencies": {
     "firebase": "^7.9.x",
     "react": "^16.x",
@@ -38,8 +38,8 @@
     "tslint": "^5.16.0",
     "typescript": "^3.0.3"
   },
-  "homepage": "https://github.com/benwinding/react-admin-firebase",
-  "email": "hello@benwinding.com",
+  "homepage": "https://github.com/s-graber/react-admin-firebase",
+  "email": "me@stefangraber.de",
   "license": "MIT",
   "scripts": {
     "build": "rm -rf dist && microbundle",
