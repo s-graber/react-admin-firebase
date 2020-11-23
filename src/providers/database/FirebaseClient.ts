@@ -1,4 +1,4 @@
-import { FirebaseFirestore } from "@firebase/firestore-types";
+import { CollectionReference, FirebaseFirestore, Query, WhereFilterOp } from "@firebase/firestore-types";
 import { IResource, ResourceManager } from "./ResourceManager";
 import { RAFirebaseOptions } from "../RAFirebaseOptions";
 import { IFirebaseWrapper } from "./firebase/IFirebaseWrapper";
@@ -15,6 +15,7 @@ import {
 } from "../../misc";
 import * as ra from '../../misc/react-admin-models';
 import { set } from "lodash";
+import { pipe } from "rxjs";
 
 export class FirebaseClient implements IFirebaseClient {
   private db: FirebaseFirestore;
@@ -28,6 +29,69 @@ export class FirebaseClient implements IFirebaseClient {
     this.rm = new ResourceManager(this.fireWrapper, this.options);
   }
 
+  private isValidObject = value => {
+      if (!value) {
+          return false;
+      }
+      const isArray = Array.isArray(value);
+      const isBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer(value);
+      const isObject = Object.prototype.toString.call(value) === '[object Object]';
+      const hasKeys = !!Object.keys(value).length;
+      return !isArray && !isBuffer && isObject && hasKeys;
+  };
+
+  private FlattenDeep = (value, path = []) => {
+    if (this.isValidObject(value)) {
+      return Object.assign(
+          {},
+          ...Object.keys(value).map(key =>
+              this.FlattenDeep(value[key], path.concat([key]))
+          )
+      );
+    } else {
+        return path.length ? { [path.join('.')]: value } : value;
+    }  
+  }
+
+  private ComposeFilter(paramsFilter) {
+    if (
+      paramsFilter === '' ||
+      (typeof paramsFilter.q !== 'undefined' && paramsFilter.q === '')
+    ) {
+      paramsFilter = {}
+    }
+
+    const flatFilter = this.FlattenDeep(paramsFilter)
+    const filter = Object.keys(flatFilter).map((key) => {
+      const splitKey = key.split('||')
+      let ops = splitKey[1] ? splitKey[1] : '=='
+      let field = splitKey[0]
+
+      if (field.indexOf('_') === 0 && field.indexOf('.') > -1) {
+        field = field.split(/\.(.+)/)[1]
+      }
+      const value = flatFilter[key]
+      // if (!isNaN(value) && !splitKey[1]) {
+      //   ops = 'in'
+      // }
+      // if (field === 'q') {
+      //   field = 'name'
+      // }
+      // if (field.indexOf('name') > -1) {
+      //   ops = 'in'
+      //   console.log('changed op to contains')
+      // }
+      log('composeFilter', {
+        key,
+        field,
+        ops,
+        value,
+      })
+      return { field, operator: ops, value }
+    })
+    return filter
+  }
+
   public async apiGetList<T>(
     resourceName: string,
     params: ra.GetListParams
@@ -38,7 +102,20 @@ export class FirebaseClient implements IFirebaseClient {
 
     const collectionQuery = filterSafe.collectionQuery
     delete filterSafe.collectionQuery;
-
+    // const flattenedFilter = this.ComposeFilter(filterSafe)
+    // log("apiGetList - flattenedFilter", { flattenedFilter });
+    // let collectionQueryFilter = collectionQuery;
+    // for (const filter of flattenedFilter){
+    //   const {field, operator, value} = filter;
+    //   let op: WhereFilterOp = operator as WhereFilterOp;
+    //   if(collectionQueryFilter === undefined){
+    //     collectionQueryFilter = (collection) => collection.where(field, op, value)
+    //   }
+    //   else{
+    //     collectionQueryFilter = collectionQueryFilter.where(field, op, value)
+    //   }
+    // }
+    // log("apiGetList - flattenedFilter", { collectionQueryFilter });
     const r = await this.tryGetResource(
       resourceName,
       "REFRESH",

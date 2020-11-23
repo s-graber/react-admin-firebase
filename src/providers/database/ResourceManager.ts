@@ -65,6 +65,7 @@ export class ResourceManager {
     return resource;
   }
 
+
   public async RefreshResource(
     relativePath: string,
     collectionQuery?: messageTypes.CollectionQueryType
@@ -77,7 +78,18 @@ export class ResourceManager {
     const query = this.applyQuery(collection, collectionQuery);
     const newDocs = await query.get();
 
-    resource.list = newDocs.docs.map(doc => this.parseFireStoreDocument(doc));
+    resource.list = await Promise.all(newDocs.docs.map(async (doc) => {
+      const data = this.parseFireStoreDocument(doc)
+      for (let key in data){
+        if(key.endsWith('_id')){
+          const relativePath = key.replace('_id','')
+          data[relativePath] = await this.GetSingleDoc(relativePath, data[key]);
+          // log("resourceManager.RefreshResource - data", { data, refId: data[key], refDoc: data[relativePath], key })
+        }
+      }
+      return data
+    }));
+
     log("resourceManager.RefreshResource", {
       newDocs,
       resource,
@@ -90,7 +102,8 @@ export class ResourceManager {
     const resource = this.resources[relativePath];
     const docSnap = await resource.collection.doc(docId).get();
     if (!docSnap.exists) {
-      throw new Error("react-admin-firebase: No id found matching: " + docId);
+      return;
+      // throw new Error("react-admin-firebase: No id found matching: " + docId);
     }
     const result = this.parseFireStoreDocument(docSnap) as QueryDocumentSnapshot;
     log("resourceManager.GetSingleDoc", {
@@ -138,19 +151,7 @@ export class ResourceManager {
   private parseFireStoreDocument(doc: QueryDocumentSnapshot): {}{
     const data: DocumentData = doc.data();
     if(data){
-      parseAllDatesDoc(data);
-
-      Object.keys(data).forEach((key) => {
-        if(key.endsWith('_id')){
-          const resource = key.replace('_id','')
-          const relativePath = `${resource}s`
-          const rootRef = this.options && this.options.rootRef;
-          const absolutePath = getAbsolutePath(rootRef, relativePath);
-          const collectionQuery = collection => collection.where(relativePath, "==", data[key])
-          data[resource] = this.RefreshResource(absolutePath, collectionQuery)        
-        }
-      });
-
+      parseAllDatesDoc(data); 
       // React Admin requires an id field on every document,
       // So we can just using the firestore document id
       return { id: doc.id, ...data }
