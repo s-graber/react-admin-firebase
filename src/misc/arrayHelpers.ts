@@ -41,9 +41,9 @@ function basicSort(aValue: any, bValue: any, isAsc: boolean) {
 
 export function filterArray(
   data: Array<{}>,
-  searchFields: { [field: string]: string | number | boolean }
+  searchFields?: { [field: string]: string | number | boolean | null }
 ): Array<{}> {
-  if (isEmpty(searchFields)) {
+  if (!searchFields || isEmpty(searchFields)) {
     return data;
   }
   const searchObjs: SearchObj[] = [];
@@ -52,41 +52,40 @@ export function filterArray(
     const getSubObjects = getFieldReferences(fieldName, fieldValue);
     searchObjs.push(...getSubObjects);
   });
-  const filtered = data.filter((row) => {
-    const filterFn = (prev, curr) => doesRowMatch(row, curr.searchField, curr.searchValue, prev);
-    return searchObjs.reduce(filterFn, true)
-  });
+  const filtered = data.filter((row) =>
+    searchObjs.reduce((acc, cur) => {
+      const res = doesRowMatch(row, cur.searchField, cur.searchValue);
+      return res && acc;
+    }, true as boolean)
+  );
   return filtered;
 }
 
 export function doesRowMatch(
   row: {},
   searchField: string,
-  searchValue: any,
-  previousValue: boolean = false,
+  searchValue: any
 ): boolean {
   const searchThis = get(row, searchField);
   const bothAreFalsey = !searchThis && !searchValue;
   if (bothAreFalsey) {
-    return true && previousValue;
+    return true;
   }
   const nothingToSearch = !searchThis;
   if (nothingToSearch) {
-    return false && previousValue;
+    return false;
   }
   const isStringSearch = typeof searchValue === "string";
   if (isStringSearch) {
-    const ret: boolean = searchThis
+    return searchThis
       .toString()
       .toLowerCase()
-      .includes(searchValue.toLowerCase())
-    return ret && previousValue;
+      .includes(searchValue.toLowerCase());
   }
   const isBooleanOrNumber =
     typeof searchValue === "boolean" || typeof searchValue === "number";
   if (isBooleanOrNumber) {
-    const ret = (searchThis === searchValue)
-    return ret && previousValue;
+    return searchThis === searchValue;
   }
-  return false && previousValue;
+  return false;
 }

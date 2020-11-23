@@ -8,7 +8,7 @@ import {
 describe("array filter", () => {
   test("filter array, filter empty", () => {
     const input = [{ name: "Apple" }, { name: "Pear" }, { name: "Banana" }];
-    const result = filterArray(input, null);
+    const result = filterArray(input);
     const expected = [{ name: "Apple" }, { name: "Pear" }, { name: "Banana" }];
     expect(result).toEqual(expected);
   });
@@ -90,19 +90,19 @@ describe("array filter", () => {
 
   test("doesRowMatch, partial", () => {
     const inputRow = { name: "Banana", enabled: true };
-    const result = doesRowMatch(inputRow, "name", "ana", true);
+    const result = doesRowMatch(inputRow, "name", "ana");
     expect(result).toEqual(true);
   });
 
   test("doesRowMatch, deep object", () => {
     const inputRow = { name: "Banana", deep: { enabled: "Apple" } };
-    const result = doesRowMatch(inputRow, "deep.enabled", "Apple", true);
+    const result = doesRowMatch(inputRow, "deep.enabled", "Apple");
     expect(result).toEqual(true);
   });
 
   test("doesRowMatch, deep object path doesn't exist", () => {
     const inputRow = { name: "Banana", deep: { enabled: "Apple" } };
-    const result = doesRowMatch(inputRow, "deep.enabled.sss", "Apple", true);
+    const result = doesRowMatch(inputRow, "deep.enabled.sss", "Apple");
     expect(result).toEqual(false);
   });
 
