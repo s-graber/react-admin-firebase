@@ -95,18 +95,22 @@ export class ResourceManager {
     const collection = resource.collection;
     const query = this.applyQuery(collection, collectionQuery);
     const newDocs = await query.get();
+    // resource.list = newDocs.docs.map((doc) => this.parseFireStoreDocument(doc));
 
     resource.list = await Promise.all(newDocs.docs.map(async (doc) => {
       const data = this.parseFireStoreDocument(doc)
       for (let key in data){
         if(key.endsWith('_id')){
           const relativePath: string = key.replace('_id','') || ''
-          const newData = await this.GetSingleDoc(relativePath, data[key]);
-          const assinged = {
-            [relativePath]: newData
+          if (data[key]){
+            const newData = await this.GetSingleDoc(relativePath, data[key]);
+            const assinged = {
+              [relativePath]: newData
+            }
+            Object.assign(data, assinged);
+            log("resourceManager.RefreshResource - subfetch", { data, refId: data[key], refDoc: data[relativePath], key })
+        
           }
-          Object.assign(data, assinged);
-          // log("resourceManager.RefreshResource - data", { data, refId: data[key], refDoc: data[relativePath], key })
         }
       }
       return data
@@ -128,6 +132,22 @@ export class ResourceManager {
       throw new Error("react-admin-firebase: No id found matching: " + relativePath + "/" + docId);
     }
     const result = this.parseFireStoreDocument(docSnap as any);
+    await Promise.all(Object.keys(result).map(async (key: string) => {
+    // for (let key in result){
+      if(key.endsWith('_id')){
+        const relativePath: string = key.replace('_id','') || ''
+        if (result[key]){
+          const newData = await this.GetSingleDoc(relativePath, result[key]);
+          const assinged = {
+            [relativePath]: newData
+          }
+          Object.assign(result, assinged);
+          log("resourceManager.GetSingleDoc - subfetch", { newData, refId: result[key], refDoc: relativePath, key })
+        }
+      }
+    // }
+    return result
+  }));
     log("resourceManager.GetSingleDoc", {
       relativePath,
       resource,
