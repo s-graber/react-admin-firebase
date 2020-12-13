@@ -177,10 +177,26 @@ export class ResourceManager {
     const resource = this.resources[relativePath];
     const docSnap = await resource.collection.doc(docId).get();
     if (!docSnap.exists) {
-      return;
-      // throw new Error("react-admin-firebase: No id found matching: " + docId);
+      // return;
+      throw new Error("react-admin-firebase: No id found matching: " + relativePath + "/" + docId);
     }
     const result = this.parseFireStoreDocument(docSnap as any);
+    await Promise.all(Object.keys(result).map(async (key: string) => {
+    // for (let key in result){
+      if(key.endsWith('_id')){
+        const relativePath: string = key.replace('_id','') || ''
+        if (result[key]){
+          const newData = await this.GetSingleDoc(relativePath, result[key]);
+          const assinged = {
+            [relativePath]: newData
+          }
+          Object.assign(result, assinged);
+          log("resourceManager.GetSingleDoc - subfetch", { newData, refId: result[key], refDoc: relativePath, key })
+        }
+      }
+    // }
+    return result
+  }));
     log("resourceManager.GetSingleDoc", {
       relativePath,
       resource,

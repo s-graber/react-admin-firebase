@@ -1,7 +1,7 @@
 {
   "name": "react-admin-firebase-sg",
   "description": "A firebase data provider for the React Admin framework (forked by s-graber)",
-  "version": "3.2.16",
+  "version": "3.2.17",
   "peerDependencies": {
     "firebase": "^7.9.x",
     "react": "^16.x",
