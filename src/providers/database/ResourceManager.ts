@@ -10,6 +10,7 @@ import {
   log,
   getAbsolutePath,
   messageTypes,
+  filterArray,
   parseAllDatesDoc,
   logWarn,
 } from "../../misc";
@@ -20,8 +21,8 @@ export interface IResource {
   path: string;
   pathAbsolute: string;
   collection: CollectionReference;
-  list: Array<{} & { deleted?: boolean }>;
-  resolvedReferences?: Array<{ [resourceName: string]: any }>;
+  list: Array<{} & { deleted?: boolean, [attr: string]: any; }>;
+  resolvedReferences?: Array<{ [attr: string]: any; }>;
 }
 
 export class ResourceManager {
@@ -152,26 +153,22 @@ export class ResourceManager {
       });
     }
 
-    resource.list = await Promise.all(newDocs.docs.map(async (doc) => {
-      const data = this.parseFireStoreDocument(doc)
+    resource.list = resource.list.map( data => {
       for (let key in data){
         if(key.endsWith('_id')){
           const relativePath: string = key.replace('_id','') || ''
-          if (data[key]){
-            const newData = await this.GetSingleDoc(relativePath, data[key]);
-            const assinged = {
-              [relativePath]: newData
+          const referencedId = ''+data[key];
+          if(resolvedReferences[relativePath] && resolvedReferences[relativePath].length > 0){
+            const reference = filterArray(resolvedReferences[relativePath], { id: referencedId  })
+            if(reference && reference.length === 1){
+              data[relativePath] = reference[0];
             }
-            Object.assign(data, assinged);
-            log("resourceManager.RefreshResource - subfetch", { data, refId: data[key], refDoc: data[relativePath], key })
-        
           }
         }
       }
       return data
-    }));
-
-    log("resourceManager.RefreshResource", {
+    })
+    log("resourceManager.RefreshResource - resolvedReferences", {
       newDocs,
       resource,
       collectionPath: collection.path,
