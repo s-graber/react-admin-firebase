@@ -12,6 +12,7 @@ import {
   getAbsolutePath,
   messageTypes,
   logError,
+  filterArray,
   parseAllDatesDoc,
   logWarn,
 } from "../../misc";
@@ -22,7 +23,8 @@ export interface IResource {
   path: string;
   pathAbsolute: string;
   collection: CollectionReference;
-  list: Array<{} & { deleted?: boolean }>;
+  list: Array<{} & { deleted?: boolean, [attr: string]: any; }>;
+  resolvedReferences?: Array<{ [attr: string]: any; }>;
 }
 
 export class ResourceManager {
@@ -95,28 +97,75 @@ export class ResourceManager {
     const collection = resource.collection;
     const query = this.applyQuery(collection, collectionQuery);
     const newDocs = await query.get();
-    // resource.list = newDocs.docs.map((doc) => this.parseFireStoreDocument(doc));
+    const collectReferences = Object();
+    resource.list = 
+    // await Promise.all(
+      newDocs.docs.map(/*async*/ (doc) => {
+        const data = this.parseFireStoreDocument(doc)
+        for (let key in data){
+          if(key.endsWith('_id')){
+            const relativePath: string = key.replace('_id','') || ''
+            if(typeof collectReferences[relativePath] === 'undefined'
+              || !(collectReferences[relativePath] instanceof Set)){
+              collectReferences[relativePath] = new Set()
+            }
+            collectReferences[relativePath].add(data[key])
 
-    resource.list = await Promise.all(newDocs.docs.map(async (doc) => {
-      const data = this.parseFireStoreDocument(doc)
+        //     const newData = await this.GetSingleDoc(relativePath, data[key]);
+        //     const assinged = {
+        //       [relativePath]: newData
+        //     }
+        //     Object.assign(data, assinged);
+        //     // log("resourceManager.RefreshResource - data", { data, refId: data[key], refDoc: data[relativePath], key })
+          }
+        }
+        return data
+      })
+    // );
+    const resolvedReferences = resource.resolvedReferences || Object();
+    if(resource.resolvedReferences){
+      log("resourceManager.RefreshResource - resolvedReferences cached", {
+        newDocs,
+        resource,
+        collectReferences,
+        resolvedReferences,
+        collectionPath: collection.path,
+      });
+    }
+    else {
+      for (let key in collectReferences){
+        const ids = Array.from(collectReferences[key])
+        resolvedReferences[key] = 
+        await Promise.all(
+          ids.map(async (docId) => await this.GetSingleDoc(key, ''+docId))
+        );
+      }
+      resource.resolvedReferences = resolvedReferences;
+      log("resourceManager.RefreshResource - resolvedReferences refreshed", {
+        newDocs,
+        resource,
+        collectReferences,
+        resolvedReferences,
+        collectionPath: collection.path,
+      });
+    }
+
+    resource.list = resource.list.map( data => {
       for (let key in data){
         if(key.endsWith('_id')){
           const relativePath: string = key.replace('_id','') || ''
-          if (data[key]){
-            const newData = await this.GetSingleDoc(relativePath, data[key]);
-            const assinged = {
-              [relativePath]: newData
+          const referencedId = ''+data[key];
+          if(resolvedReferences[relativePath] && resolvedReferences[relativePath].length > 0){
+            const reference = filterArray(resolvedReferences[relativePath], { id: referencedId  })
+            if(reference && reference.length === 1){
+              data[relativePath] = reference[0];
             }
-            Object.assign(data, assinged);
-            log("resourceManager.RefreshResource - subfetch", { data, refId: data[key], refDoc: data[relativePath], key })
-        
           }
         }
       }
       return data
-    }));
-
-    log("resourceManager.RefreshResource", {
+    })
+    log("resourceManager.RefreshResource - resolvedReferences", {
       newDocs,
       resource,
       collectionPath: collection.path,
